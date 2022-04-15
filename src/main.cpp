@@ -129,10 +129,10 @@ void loop() {
     if(radio -> getLocalAddress() == 0x3A0C&& dataCounter3 <= 40320){
         Log.trace(F("Send packet %d"CR),dataCounter3);
         helloPacket->counter = dataCounter3++;
-        radio->createPacketAndSend(0xB1A4,helloPacket,1);
+        radio->createPacketAndSend(0x4E64,helloPacket,1);
         }
 
-        if(radio -> getLocalAddress() == 0xB1A4 && dataCounter4 <= 40320){
+        if(radio -> getLocalAddress() == 0x4E64 && dataCounter4 <= 40320){
         Log.trace(F("Send packet %d"CR),dataCounter4);
         helloPacket->counter = dataCounter4++;
         radio->createPacketAndSend(0xC4F0,helloPacket,1);
