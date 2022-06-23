@@ -1,9 +1,10 @@
 #include <Arduino.h>
-#include "loramesher.cpp"
+#include "LoraMesher.h"
+#include "network.h"
 
 #define BOARD_LED 4
 
-LoraMesher* radio;
+LoraMesher& radio = LoraMesher::getInstance() ;
 uint32_t dataCounter2 = 0;
 uint32_t dataCounter1 = 0;
 uint32_t dataCounter3 = 0;
@@ -31,8 +32,8 @@ void led_Flash(uint16_t flashes, uint16_t delaymS) {
  *
  * @param data
  */
-void printPacket(dataPacket* data) {
-    Log.verbose(F("Hello Counter received nº %X" CR), data->counter);
+void printPacket(dataPacket data) {
+    Log.verboseln(F("Hello Counter received nº %X" CR), data.counter);
 }
 
 /**
@@ -40,18 +41,17 @@ void printPacket(dataPacket* data) {
  *
  * @param packet
  */
-void printDataPacket(LoraMesher::packet<dataPacket>* packet) {
-    Log.trace(F("Packet arrived from %X with size %d" CR), packet->src, packet->payloadSize);
+void printDataPacket(AppPacket<dataPacket>* packet) {
+    Log.traceln(F("Packet arrived from %X with size %d" CR), packet->src, packet->payloadSize);
 
     //Get the payload to iterate through it
-    dataPacket* packets = radio->getPayload(packet);
+    dataPacket* dPacket = packet->payload;
+    size_t payloadLength = packet->getPayloadLength();
 
-    for (size_t i = 0; i < radio->getPayloadLength(packet); i++) {
+    for (size_t i = 0; i < payloadLength; i++) {
         //Print the packet
-        printPacket(&packets[i]);
+        printPacket(dPacket[i]);
     }
-    //Delete the packet. It is very important to delete the packet.
-    delete packet;
 }
 
 /**
@@ -65,29 +65,45 @@ void processReceivedPackets(void*) {
         led_Flash(1, 100); //one quick LED flashes to indicate a packet has arrived
 
         //Iterate through all the packets inside the Received User Packets FiFo
-        while (radio->ReceivedUserPackets->Size() > 0) {
-            Log.trace(F("ReceivedUserData_TaskHandle notify received" CR));
-            Log.trace(F("Fifo receiveUserData size: %d" CR), radio->ReceivedUserPackets->Size());
+        while (radio.getReceivedQueueSize() > 0) {
+            Log.traceln(F("ReceivedUserData_TaskHandle notify received" CR));
+            Log.traceln(F("Fifo receiveUserData size: %d" CR), radio.getReceivedQueueSize() > 0);
 
             //Get the first element inside the Received User Packets FiFo
-            LoraMesher::packetQueue<dataPacket>* helloReceived = radio->ReceivedUserPackets->Pop<dataPacket>();
+            AppPacket<dataPacket>* packet = radio.getNextAppPacket<dataPacket>();
 
             //Print the data packet
-            printDataPacket(helloReceived->packet);
+            printDataPacket(packet);
 
-            //Delete the packet when used. It is very important to delete the packets.
-            delete helloReceived;
+            //Delete the packet when used. It is very important to call this function to release the memory of the packet.
+            radio.deletePacket(packet);
         }
     }
 }
 
+/**
+ * @brief Initialize LoRaMesher
+ *
+ */
 void setupLoraMesher() {
-
-    //Create a loramesher with a processReceivedPackets function
-    radio = new LoraMesher(processReceivedPackets);
+    //Init the loramesher with a processReceivedPackets function
+    radio.init(processReceivedPackets);
 
     Serial.println("Lora initialized");
 }
+
+void setupMonitoring() {
+    Network* myNetwork = new Network();
+
+    Serial.println("Network initialized");
+}
+
+
+
+
+
+    
+
 
 
 void setup() {
@@ -97,10 +113,13 @@ void setup() {
     pinMode(BOARD_LED, OUTPUT); //setup pin as output for indicator LED
     led_Flash(2, 125);          //two quick LED flashes to indicate program start
     setupLoraMesher();
+    setupMonitoring();
+
 }
 
 
 void loop() {
+
 
 /* 
     Log.trace(F("Send packet %d" CR), dataCounter);
@@ -114,28 +133,28 @@ void loop() {
 
 
   */
-    if (radio->getLocalAddress() == 0xC4F0&& dataCounter1 <=40320) {
+    if (radio.getLocalAddress() == 0xC4F0&& dataCounter1 <=60) {
         Log.trace(F("Send packet %d" CR), dataCounter1);
         helloPacket->counter = dataCounter1++;
 
         //Create packet and send it.
-        radio->createPacketAndSend(0xD39C, helloPacket, 1);
+        radio.createPacketAndSend(0xD39C, helloPacket, 1);
     }
-    if(radio -> getLocalAddress() == 0xD39C&& dataCounter2 <= 40320){
+    if(radio.getLocalAddress() == 0xD39C&& dataCounter2 <= 60){
         Log.trace(F("Send packet %d"CR),dataCounter2);
         helloPacket->counter = dataCounter2++;
-        radio->createPacketAndSend(0x3A0C,helloPacket,1);
+        radio.createPacketAndSend(0x3A0C,helloPacket,1);
     }
-    if(radio -> getLocalAddress() == 0x3A0C&& dataCounter3 <= 40320){
+    if(radio.getLocalAddress() == 0x3A0C&& dataCounter3 <= 60){
         Log.trace(F("Send packet %d"CR),dataCounter3);
         helloPacket->counter = dataCounter3++;
-        radio->createPacketAndSend(0x4E64,helloPacket,1);
+        radio.createPacketAndSend(0x4E64,helloPacket,1);
         }
 
-        if(radio -> getLocalAddress() == 0x4E64 && dataCounter4 <= 40320){
+        if(radio.getLocalAddress() == 0x4E64 && dataCounter4 <= 60){
         Log.trace(F("Send packet %d"CR),dataCounter4);
         helloPacket->counter = dataCounter4++;
-        radio->createPacketAndSend(0xC4F0,helloPacket,1);
+        radio.createPacketAndSend(0xC4F0,helloPacket,1);
     }
 
     //Wait 30 seconds to send the next packet
