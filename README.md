@@ -2,7 +2,7 @@
 Main project for testing the LoRaMesher with the network module
 
 ### Description
-Project with four boards sending data packets in round 
+A data packet will be created and encapsulated and sent via broadcast . Main program specially designed to see results into the elastic search server implemented in [this](https://github.com/pellax/micowlocalyzer/blob/cronversion/README.md) repo.
 ### Set up
 Open the directory ExampleSergi with the PlatformIO IDE
 ### Compilation
