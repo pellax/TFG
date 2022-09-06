@@ -21,7 +21,8 @@ We recommend the two steps build and flash when you connect the boards.
 2. Left Click on the arrow to flash one board at a time, wait until no more messages are printed out through the console.
 ### Setup troubleshooting
 Some errors may appear. One well known error is the compiler complaining about the HTTPClient. This may be caused by a double declaration of the HTTPClient, look the Compilation section to solve this issue. Please update the readme file if there are any other unknown issues.
-
+# update.py
+This file is supposed to flash all plugged boards at a time but It may give some problems. If your boards are not from the same kind, or if you are using windows, some of the instructions may not work properly. If this script give strange messages, please flash boards one by one. 
 
 
 
