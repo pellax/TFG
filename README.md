@@ -24,5 +24,6 @@ Some errors may appear. One well known error is the compiler complaining about t
 # update.py
 This file is supposed to flash all plugged boards at a time but It may give some problems. If your boards are not from the same kind, or if you are using windows, some of the instructions may not work properly. If this script give strange messages, please flash boards one by one. 
 
-
+# Platformio.ini
+This file has all the libraries needed to have a main program prepared to work with the node and elastic module located in the branch called cronversion located in [this](https://github.com/pellax/micowlocalyzer/tree/cronversion)repository. If you want to modify the main program make sure to not change the platformio.ini file.
 
